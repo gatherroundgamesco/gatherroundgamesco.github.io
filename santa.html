@@ -1,0 +1,88 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Free Secret Santa Generator: No Email, Exclusions, Wish Lists | Gather Round Games</title>
+<meta name="description" content="Draw names for Secret Santa with no email or sign-up. Add exclusions (couples, last year's pairs) and wish lists. Share private reveal links or print slips.">
+<meta name="referrer" content="no-referrer">
+<link rel="canonical" href="https://gatherroundgamesco.github.io/santa.html">
+<meta property="og:type" content="website"><meta property="og:url" content="https://gatherroundgamesco.github.io/santa.html"><meta property="og:title" content="Free Secret Santa Generator: No Email, Exclusions, Wish Lists | Gather Round Games">
+<link rel="stylesheet" href="style.css"></head><body>
+<a class="skip" href="#main">Skip to main content</a>
+<header><h1>Gather Round Games</h1><p>Secret Santa name draw: no email, no sign-up</p></header>
+<main id="main" tabindex="-1">
+<form class="panel no-print" id="setup" novalidate>
+<h2><label for="names">1. Who's in?</label></h2>
+<p class="small" id="names-help">One name per line (3 or more). Optional wish list after a colon: <code>Sam: books, hot sauce</code>. Each name must be unique.</p>
+<textarea id="names" rows="8" aria-describedby="names-help msg" autocomplete="off">Alex: puzzles, coffee
+Sam: books
+Jordan
+Riley: anything green
+Casey</textarea>
+<h2><label for="excl">2. Exclusions (optional)</label></h2>
+<p class="small" id="excl-help">One pair per line, e.g. couples or last year's pairs: <code>Alex - Sam</code>. Works both ways.</p>
+<textarea id="excl" rows="4" aria-describedby="excl-help msg" autocomplete="off">Alex - Sam</textarea>
+<h2>3. Budget and date (optional)</h2>
+<div class="row"><p><label for="budget">Budget</label><br><input id="budget" placeholder="$25" autocomplete="off"></p>
+<p><label for="date">Exchange date</label><br><input id="date" placeholder="Dec 18" autocomplete="off"></p></div>
+<p><button type="submit" id="draw">Draw names</button></p>
+<p class="small">The draw runs in your browser. Nothing is uploaded, stored, or emailed. <a href="#faq">How private are the links?</a></p>
+</form>
+<div id="msg" role="alert"></div>
+<p id="status" role="status" class="small no-print"></p>
+<section id="out"></section>
+
+<section class="panel no-print" id="faq" aria-labelledby="faq-h">
+<h2 id="faq-h">Reveal links and privacy: FAQ</h2>
+<details><summary>Are the reveal links encrypted?</summary>
+<p><strong>No. Reveal links are scrambled, not encrypted.</strong> The pairing is written into the link itself in a scrambled form so a quick glance won't spoil it. Anyone with a little technical know-how who has the link can unscramble it and see who the person is buying for. There is no password and no secret key.</p></details>
+<details><summary>So can the organizer see who has whom?</summary>
+<p>Yes, if they want to. The organizer has every link and could unscramble any of them. The tool keeps the pairs off the organizer's screen so nobody spoils it by accident, but it can't stop someone determined to peek. If even the organizer must not know, use the printable slips and have someone else hand them out, or let each person draw their own folded slip.</p></details>
+<details><summary>Is anything sent to a server or stored?</summary>
+<p>No. The draw happens in your browser. Names, wish lists, and pairs are not uploaded, saved, or emailed by us, and we use no cookies or tracking. The pairing lives in the part of the link after the <code>#</code>, which browsers don't send to the website when the page loads.</p></details>
+<details><summary>Who else could see a link?</summary>
+<p>Anyone you share it with, or anyone who can see the message you send it in (a group chat, a shared inbox, a phone's lock-screen preview). Send each link only to its own person, one-to-one. Link previews in some chat apps may open the page, but the pairing is not part of what the server receives.</p></details>
+<details><summary>What if I redraw?</summary>
+<p>A new draw makes new links. Old links still show the old pairing, so tell everyone to use only the newest link.</p></details>
+<details><summary>Should I put sensitive information in wish lists?</summary>
+<p>No. Wish lists travel inside the links with the same scrambled-not-encrypted protection. Keep them to gift ideas: no addresses, phone numbers, or anything private.</p></details>
+</section>
+
+<aside class="panel no-print promo" aria-labelledby="shop-h"><h2 id="shop-h">Make it a party</h2><p>Printable gift-exchange games, name tags and wish-list cards.</p>
+<p><a class="btn" href="https://www.etsy.com/shop/GatherRoundGamesCo">See the Gather Round shop on Etsy</a></p></aside>
+<footer class="no-print"><nav aria-label="Other tools"><a href="index.html">Bingo &amp; trivia generator</a> · <a href="party.html">Party mode</a> · <a href="https://www.etsy.com/shop/GatherRoundGamesCo">Etsy shop</a></nav></footer>
+</main>
+<script src="santa-core.js"></script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const say=(t)=>{$("#names").removeAttribute("aria-invalid");$("#excl").removeAttribute("aria-invalid");$("#msg").innerHTML=t?`<p class="panel error">${esc(t)}</p>`:""};
+const h=location.hash.slice(1);
+if(h.startsWith("r=")){ // reveal view
+  $("#setup").hidden=true;
+  try{const r=decodeReveal(h.slice(2)); if(!r||typeof r.g!=="string"||typeof r.r!=="string") throw 0;
+   document.title="Your Secret Santa | Gather Round Games";
+   $("#out").innerHTML=`<article class="card reveal"><h2>Hi ${esc(r.g)}!</h2><p>You're the Secret Santa for</p><p class="who">${esc(r.r)}</p>${r.w?`<p>Their wish list: <b>${esc(r.w)}</b></p>`:""}${r.b||r.d?`<p>${r.b?`Budget: ${esc(r.b)}`:""}${r.b&&r.d?" · ":""}${r.d?`Exchange: ${esc(r.d)}`:""}</p>`:""}<p class="small">Keep it secret! <a href="santa.html">Make your own draw</a></p></article>`;
+  }catch(e){say("This reveal link is broken or incomplete. Ask the organizer to send it again.")}
+}
+async function copy(btn){const inp=document.getElementById(btn.dataset.for);
+  try{await navigator.clipboard.writeText(inp.value);btn.textContent="Copied";}catch(e){inp.focus();inp.select();btn.textContent="Press Ctrl/Cmd+C";}
+  setTimeout(()=>btn.textContent="Copy link",2000)}
+$("#setup").addEventListener("submit",ev=>{ev.preventDefault();say("");$("#out").innerHTML="";
+ const people=[],wish={};
+ $("#names").value.split("\n").map(s=>s.trim()).filter(Boolean).forEach(l=>{const i=l.indexOf(":");const name=(i<0?l:l.slice(0,i)).trim();people.push(name);wish[name.normalize("NFC")]=i<0?"":l.slice(i+1).trim()});
+ const lines=$("#excl").value.split("\n").map(l=>l.trim()).filter(Boolean),excl=[];
+ for(const l of lines){const p=l.split(/\s+-\s+/).map(s=>s.trim());if(p.length!==2||!p[0]||!p[1]){say(`Can't read exclusion "${l}". Use the form "Name - Name" with spaces around the dash.`);$("#excl").setAttribute("aria-invalid","true");$("#excl").focus();return}excl.push(p)}
+ const st=$("#status"),btn=$("#draw"); st.textContent="Working…"; btn.disabled=true;
+ setTimeout(()=>{ try{ finish(people,wish,excl); } finally { btn.disabled=false; } },20);
+});
+function finish(people,wish,excl){
+ const res=drawSanta(people,excl); if(res.error){$("#status").textContent="";say(res.error);const f=$(res.field==="exclusions"?"#excl":"#names");f.setAttribute("aria-invalid","true");f.focus();return}
+ const base=location.href.split("#")[0],givers=Object.keys(res.pairs),b=$("#budget").value.trim(),d=$("#date").value.trim();
+ const rows=givers.map((g,i)=>{const link=base+"#r="+encodeReveal({g,r:res.pairs[g],w:wish[res.pairs[g]]||"",b,d});
+   return `<li><label for="l${i}">${esc(g)}</label><span class="linkrow"><input id="l${i}" readonly value="${esc(link)}"><button type="button" class="copy" data-for="l${i}" aria-label="Copy link for ${esc(g)}">Copy link</button></span></li>`}).join("");
+ const slips=givers.map(g=>`<div class="slip"><p class="slip-to">To: <b>${esc(g)}</b> <span class="small">(fold here, write name outside)</span></p><p>You're the Secret Santa for</p><p class="who">${esc(res.pairs[g])}</p>${wish[res.pairs[g]]?`<p>Wish list: ${esc(wish[res.pairs[g]])}</p>`:""}${b||d?`<p class="small">${b?"Budget: "+esc(b):""}${b&&d?" · ":""}${d?"Exchange: "+esc(d):""}</p>`:""}</div>`).join("");
+ $("#out").innerHTML=`<div class="panel no-print"><h2 id="links-h" tabindex="-1">Send each person their own link</h2><p class="small">Copy a link and send it one-to-one to that person. Don't open other people's links if you want to stay surprised. Links are scrambled, not encrypted (<a href="#faq">FAQ</a>).</p><ul class="links">${rows}</ul><p><button type="button" id="printSlips">Print slips instead</button></p><p class="small">Printing shows every pairing on paper. Cut along the dashed lines and fold each slip so only the "To" name shows.</p></div><section class="slips" aria-label="Printable slips">${slips}</section>`;
+ $("#out").querySelectorAll(".copy").forEach(b=>b.onclick=()=>copy(b));
+ $("#out").querySelectorAll("input[readonly]").forEach(i=>i.onfocus=()=>i.select());
+ $("#printSlips").onclick=()=>window.print();
+ $("#status").textContent=`Done: ${givers.length} links ready.`;
+ $("#links-h").focus();
+}
+</script></body></html>

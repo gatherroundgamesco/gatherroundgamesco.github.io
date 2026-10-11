@@ -1,0 +1,44 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Party Mode: Big-Screen Trivia & Bingo Caller | Gather Round Games</title>
+<link rel="canonical" href="https://gatherroundgamesco.github.io/party.html">
+<meta property="og:type" content="website"><meta property="og:url" content="https://gatherroundgamesco.github.io/party.html"><meta property="og:title" content="Party Mode: Big-Screen Trivia & Bingo Caller | Gather Round Games">
+<link rel="stylesheet" href="style.css">
+<style>.big{font-size:44px;text-align:center;font-family:Georgia,serif}.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:600px){.opts{grid-template-columns:1fr}.big{font-size:30px}.opts div{font-size:18px}}.correct{background:#1F6B45!important;color:#fff;font-weight:700}.opts div{background:#fff;border:2px solid #9C4422;border-radius:8px;padding:14px;font-size:24px}.score{display:flex;gap:8px;flex-wrap:wrap;list-style:none;padding:0}.score li{background:#fff;padding:8px 12px;border-radius:6px}</style></head><body>
+<a class="skip" href="#main">Skip to main content</a>
+<header><h1>Gather Round Games: Party Mode</h1><p>Put this on the TV. One host runs it; no phones or accounts needed.</p></header>
+<main id="main" tabindex="-1">
+<section class="panel" aria-label="Game setup"><fieldset><legend class="small">Mode</legend><label><input type="radio" name="m" value="trivia" checked> Trivia show</label> <label><input type="radio" name="m" value="bingo"> Bingo caller</label></fieldset>
+ <p><label for="theme">Theme</label> <select id="theme"><option value="tg">Thanksgiving</option><option value="xm">Christmas</option><option value="nye">New Year's Eve</option></select></p>
+ <p><label for="teams">Teams (comma-separated)</label> <input id="teams" value="Team A, Team B" size="24"> <button type="button" id="start">Start</button></p></section>
+<section id="stage" class="panel" aria-labelledby="stage-h"><h2 id="stage-h" tabindex="-1">Ready when you are</h2><p>Pick a mode and theme, then press Start.</p></section>
+<p id="announce" class="sr-only" role="status" aria-live="polite"></p>
+<footer><nav aria-label="Other tools"><a href="index.html">Printable generator</a> · <a href="santa.html">Secret Santa</a> · <a href="https://www.etsy.com/shop/GatherRoundGamesCo">Etsy shop</a></nav></footer>
+</main><script src="data.js"></script><script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let S={};
+const say=t=>{const a=$("#announce");a.textContent="";setTimeout(()=>a.textContent=t,30)}; // announce only what changed
+$("#start").onclick=()=>{const m=document.querySelector('input[name=m]:checked').value,th=$("#theme").value;
+ clearInterval(S.tm);
+ S={m,i:0,teams:$("#teams").value.split(",").map(s=>s.trim()).filter(Boolean),score:{},items:m==="trivia"?shuffle(DATA.trivia[th]).slice(0,10):shuffle(DATA.bingo[th]),called:[]};
+ if(!S.teams.length) S.teams=["Team A"]; S.teams.forEach(t=>S.score[t]=0);
+ if(m==="bingo") buildBingo(); else buildQuestion(); $("#stage-h").focus();};
+function scoreHtml(buttons){return `<h3>Scores</h3><ul class="score">${S.teams.map((t,i)=>`<li><span id="sc${i}">${esc(t)}: ${S.score[t]}</span>${buttons?` <button type="button" data-i="${i}" aria-label="Add a point for ${esc(t)}">+1</button>`:""}</li>`).join("")}</ul>`}
+function buildBingo(){const st=$("#stage");
+ st.innerHTML=`<h2 id="stage-h" tabindex="-1">Bingo caller</h2><p class="big" id="word">Ready?</p><p style="text-align:center"><button type="button" id="nx">Call next word</button></p><h3>Called words (<span id="cnt">0</span>)</h3><p class="small" id="called"></p>`;
+ $("#nx").onclick=()=>{ if(S.called.length>=S.items.length){say("All words have been called.");return}
+  const w=S.items[S.called.length]; S.called.push(w);
+  $("#word").textContent=w; $("#cnt").textContent=S.called.length; $("#called").textContent=S.called.join(" · ");
+  say(w); if(S.called.length>=S.items.length) $("#nx").disabled=true; }; // button node is kept, so focus stays on it
+}
+function buildQuestion(){const st=$("#stage");
+ if(S.i>=S.items.length){st.innerHTML=`<h2 id="stage-h" tabindex="-1">Final scores</h2>${scoreHtml(false)}`;$("#stage-h").focus();say("Final scores. "+S.teams.map(t=>t+" "+S.score[t]).join(", "));return}
+ const q=S.items[S.i],L="ABCD";
+ st.innerHTML=`<h2 id="stage-h" tabindex="-1">Question ${S.i+1} of ${S.items.length}</h2><p class="big" style="font-size:32px">${esc(q[0])}</p><h3 class="sr-only">Options</h3><div class="opts">${q[1].map((o,i)=>`<div id="o${i}">${L[i]}) ${esc(o)}</div>`).join("")}</div>
+ <p><button type="button" id="rev">Reveal answer</button> <span aria-hidden="true"><span id="t">30</span>s</span> <span id="ans"></span></p>${scoreHtml(true)}<p><button type="button" id="nx">Next question</button></p>`;
+ let t=30;clearInterval(S.tm);S.tm=setInterval(()=>{t--; const e=$("#t"); if(e)e.textContent=t; if(t===10)say("10 seconds left"); if(t<=0){clearInterval(S.tm);say("Time's up")}},1000);
+ $("#rev").onclick=()=>{const o=$("#o"+q[2]); if(o.classList.contains("correct"))return; o.classList.add("correct");o.textContent+=" ✓";$("#ans").textContent="Answer: "+L[q[2]];say("Answer: "+o.textContent)};
+ st.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{const tm=S.teams[+b.dataset.i];S.score[tm]++;$("#sc"+b.dataset.i).textContent=tm+": "+S.score[tm];say(tm+" now has "+S.score[tm])});
+ $("#nx").onclick=()=>{S.i++;buildQuestion(); if($("#nx")) $("#nx").focus(); else $("#stage-h").focus(); say(S.i<S.items.length?"Question "+(S.i+1):"")};
+}
+</script></body></html>

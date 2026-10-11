@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Free Holiday Party Bingo & Trivia Generator | Gather Round Games</title>
+<meta name="description" content="Make free printable holiday bingo cards and party trivia in seconds. Thanksgiving, Christmas, New Year's Eve, office party. No sign-up.">
+<link rel="canonical" href="https://gatherroundgamesco.github.io/">
+<meta property="og:type" content="website"><meta property="og:url" content="https://gatherroundgamesco.github.io/"><meta property="og:title" content="Free Holiday Party Bingo & Trivia Generator | Gather Round Games">
+<link rel="stylesheet" href="style.css"></head><body>
+<a class="skip" href="#main">Skip to main content</a>
+<header><h1>Gather Round Games</h1><p>Free printable party game generator</p></header>
+<main id="main" tabindex="-1">
+<section class="panel no-print">
+<fieldset><legend>1. Pick a game</legend>
+<label><input type="radio" name="mode" value="bingo" checked> Bingo cards</label>
+<label><input type="radio" name="mode" value="trivia"> Trivia quiz</label></fieldset>
+<h2><label for="theme">2. Pick a theme</label></h2>
+<select id="theme"><option value="tg">Thanksgiving</option><option value="xm">Christmas</option><option value="nye">New Year's Eve</option><option value="custom">My own words</option></select>
+<div id="customBox" hidden><p><label for="custom">Bingo: enter 24+ words, one per line.</label></p><textarea id="custom" rows="8"></textarea></div>
+<h2><label for="count">3. How many cards?</label></h2>
+<input id="count" type="number" min="1" max="30" value="6" inputmode="numeric" aria-describedby="count-help"> cards
+<p class="small" id="count-help">Bingo: 1 to 30 cards, each one different. Trivia always makes one 10-question sheet.</p>
+<p><button type="button" id="go">Make my game</button> <button type="button" id="print">Print</button></p>
+<p class="small">Everything runs in your browser. Nothing is uploaded or stored.</p>
+</section>
+<div id="msg" role="alert"></div>
+<section id="out" aria-live="polite" aria-label="Your game"></section>
+<aside class="panel no-print promo" aria-labelledby="shop-h">
+<h2 id="shop-h">Want the full party pack?</h2>
+<p>Charades, scavenger hunts, would-you-rather cards and 20+ more printable games, designed and ready to print in Letter and A4.</p>
+<p><a class="btn" id="shop" href="https://www.etsy.com/shop/GatherRoundGamesCo">See the bundles on Etsy</a></p>
+</aside>
+<footer class="no-print"><nav aria-label="Other tools"><a href="santa.html">Secret Santa (no email)</a> · <a href="party.html">Party mode</a> · <a href="https://www.etsy.com/shop/GatherRoundGamesCo">Etsy shop</a></nav><p>Gather Round Games. Games written and designed with the help of AI tools and checked by our team. Free cards are for personal and classroom use.</p></footer>
+</main><script src="data.js"></script><script src="app.js"></script></body></html>
