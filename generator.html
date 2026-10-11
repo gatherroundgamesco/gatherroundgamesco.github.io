@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Free Holiday Bingo &amp; Trivia Generator | Gather Round Games</title>
+<meta name="description" content="Make free printable holiday bingo cards and party trivia in seconds. Thanksgiving, Christmas, New Year's Eve. No sign-up.">
+<link rel="canonical" href="https://gatherroundgamesco.github.io/generator.html">
+<meta property="og:type" content="website"><meta property="og:url" content="https://gatherroundgamesco.github.io/generator.html"><meta property="og:title" content="Free Holiday Bingo &amp; Trivia Generator | Gather Round Games"><meta property="og:description" content="Make free printable holiday bingo cards and party trivia in seconds. Thanksgiving, Christmas, New Year's Eve. No sign-up.">
+<link rel="stylesheet" href="style.css"></head><body>
+<a class="skip" href="#main">Skip to main content</a>
+<header><h1>Gather Round Games</h1><p>Free printable party game generator</p></header>
+<main id="main" tabindex="-1">
+<section class="panel no-print">
+<fieldset><legend>1. Pick a game</legend>
+<label><input type="radio" name="mode" value="bingo" checked> Bingo cards</label>
+<label><input type="radio" name="mode" value="trivia"> Trivia quiz</label></fieldset>
+<h2><label for="theme">2. Pick a theme</label></h2>
+<select id="theme"><option value="tg">Thanksgiving</option><option value="xm">Christmas</option><option value="nye">New Year's Eve</option><option value="custom">My own words</option></select>
+<div id="customBox" hidden><p><label for="custom">Bingo: enter 24+ words, one per line.</label></p><textarea id="custom" rows="8"></textarea></div>
+<h2><label for="count">3. How many cards?</label></h2>
+<input id="count" type="number" min="1" max="30" value="6" inputmode="numeric" aria-describedby="count-help"> cards
+<p class="small" id="count-help">Bingo: 1 to 30 cards, each one different. Trivia always makes one 10-question sheet.</p>
+<p><button type="button" id="go">Make my game</button> <button type="button" id="print">Print</button></p>
+<p class="small">Everything runs in your browser. Nothing is uploaded or stored.</p>
+</section>
+<div id="msg" role="alert"></div>
+<section id="out" aria-live="polite" aria-label="Your game"></section>
+<footer class="no-print"><nav aria-label="Free tools"><a href="index.html">All free tools</a> · <a href="santa.html">Secret Santa</a> · <a href="generator.html">Printable bingo &amp; trivia</a> · <a href="party.html">Party mode</a> · <a href="brackets/">Bracket maker</a></nav><p class="small">Gather Round Games. Free tools, no sign-up. <a href="https://www.etsy.com/shop/GatherRoundGamesCo" rel="noopener">Printable packs on Etsy</a></p></footer>
+</main><script src="data.js"></script><script src="app.js"></script></body></html>
