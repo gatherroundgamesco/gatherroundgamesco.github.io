@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bracket of Anything: Free Printable Bracket, Double Elimination and Round-Robin Maker</title>
+<meta name="description" content="Make a bracket for snacks, movies, office debates or game night in a minute. Single or double elimination, round robin, automatic byes. Free, printable, no sign-up, no betting.">
+<meta name="referrer" content="no-referrer">
+<link rel="canonical" href="https://gatherroundgamesco.github.io/brackets/">
+<meta property="og:type" content="website"><meta property="og:url" content="https://gatherroundgamesco.github.io/brackets/"><meta property="og:title" content="Bracket of Anything: Free Printable Bracket, Double Elimination and Round-Robin Maker"><meta property="og:description" content="Make a bracket for snacks, movies, office debates or game night in a minute. Single or double elimination, round robin, automatic byes. Free, printable, no sign-up, no betting.">
+<link rel="stylesheet" href="style.css"></head><body>
+<a class="skip" href="#main">Skip to main content</a>
+<header><h1>Bracket of Anything</h1><p>Snacks, movies, office debates, game night. Free, printable, no sign-up. No betting, ever.</p></header>
+<main id="main" tabindex="-1">
+<form class="panel no-print" id="setup" novalidate><div class="row">
+<div>
+<p><label for="tpl">Start from a template</label><select id="tpl"><option value="">(blank)</option></select></p>
+<p><label for="title">Title</label><input type="text" id="title" value="Best Holiday Snack" maxlength="100" autocomplete="off"></p>
+<p><label for="ent">Entries</label><br><span class="small" id="ent-help">One per line, best seed first. 2 to 256 entries. Byes are added automatically when the count isn't 4, 8, 16 and so on.</span>
+<textarea id="ent" rows="9" aria-describedby="ent-help msg warn" autocomplete="off">Pumpkin pie
+Hot cocoa
+Gingerbread
+Candy cane
+Pecan pie
+Stuffing
+Latkes</textarea></p>
+</div>
+<div>
+<fieldset><legend>Format</legend>
+<label><input type="radio" name="f" value="single" checked> Single elimination</label>
+<label><input type="radio" name="f" value="double"> Double elimination (3+ entries)</label>
+<label><input type="radio" name="f" value="rr"> Round robin (everyone plays everyone)</label></fieldset>
+<p class="actions"><button type="submit" id="go">Make bracket</button><button type="button" class="sec" id="print">Print</button><button type="button" class="sec" id="share">Copy share link</button></p>
+<div id="msg" role="alert"></div><div id="warn" role="status"></div>
+<fieldset><legend>Saved on this device</legend>
+<div class="inline"><button type="button" class="sec" id="save">Save</button><label for="saves" class="sr-only">Saved brackets</label><select id="saves"></select><button type="button" class="sec" id="load">Load</button><button type="button" class="sec" id="del">Delete</button></div></fieldset>
+<p class="small">Choose an entry in a match to advance it (Tab to move, Enter or Space to choose). Changing an earlier pick clears later picks that depended on it. Saves stay in this browser. A share link holds the whole bracket, so anyone with the link can see the entries. Nothing is sent to a server.</p>
+</div></div></form>
+<p id="status" class="sr-only" role="status" aria-live="polite"></p>
+<section id="out" class="panel" tabindex="-1" aria-label="Your bracket"></section>
+</main>
+<footer class="no-print"><nav aria-label="Free tools"><a href="../index.html">All free tools</a> · <a href="../santa.html">Secret Santa</a> · <a href="../generator.html">Printable bingo &amp; trivia</a> · <a href="../party.html">Party mode</a></nav><p>Bracket of Anything. Free for fun, classrooms and offices. No betting, pools, entry fees or prizes. <a href="https://www.etsy.com/shop/GatherRoundGamesCo" rel="noopener">Printable packs on Etsy</a></p></footer>
+<script src="bracket-core.js"></script><script src="app.js"></script></body></html>
