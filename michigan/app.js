@@ -720,21 +720,36 @@
    * Sky: Radar (RainViewer public, keyless). Last ~1 hour, play/pause.
    * ------------------------------------------------------------- */
   var radar = { frames: [], layers: [], idx: 0, timer: null, playing: false, tiles: [], st: null, def: null };
-  // Tile counters are kept per frame and rebuilt on every refresh. The chip reads only the frame on screen, so a frame
-  // change or a refresh starts it from that frame's own fresh counts; old failures don't stick.
-  function radarTiles(i) {
-    var st = radar.st;
-    if (!st) { return; }
-    var prev = st.tiles, cur = radar.tiles[i] || { ok: 0, err: 0 };
-    st.tiles = cur;
-    if (prev !== cur && radar.def && (!prev || prev.ok !== cur.ok || prev.err !== cur.err)) { paint(radar.def); }
+  // Tile health: per frame, the state of each tile by key (z:x:y), rebuilt on every refresh and dropped on 'tileunload'.
+  // The chip counts only the shown frame's tiles that are at the current tile zoom and on screen right now, recounted on
+  // tile events, frame changes and moveend/zoomend, so failures from earlier views, zooms, frames or refreshes don't stick.
+  function radarCount() {
+    var st = radar.st, l = radar.layers[radar.idx], m = radar.tiles[radar.idx];
+    if (!st || !l || !m) { return; }
+    var box = map.getContainer().getBoundingClientRect(), tz = l._tileZoom, ok = 0, err = 0;
+    Object.keys(m).forEach(function (key) {
+      var t = m[key];
+      if (!t.el.isConnected) { delete m[key]; return; }
+      if (tz != null && t.z !== tz) { return; }
+      var r = t.el.getBoundingClientRect();
+      if (r.right <= box.left || r.left >= box.right || r.bottom <= box.top || r.top >= box.bottom) { return; }
+      if (t.ok) { ok++; } else { err++; }
+    });
+    var prev = st.tiles;
+    st.tiles = { ok: ok, err: err };
+    if (radar.def && (!prev || prev.ok !== ok || prev.err !== err)) { paint(radar.def); }
   }
+  var radarPending = null;
+  function radarRecount() {
+    if (!radarPending) { radarPending = setTimeout(function () { radarPending = null; radarCount(); }, 300); }
+  }
+  map.on('moveend zoomend', function () { if (radar.st && S.radar && S.radar.on) { radarRecount(); } });
   function radarShow(i) {
     radar.idx = i;
     radar.layers.forEach(function (l, k) { l.setOpacity(k === i ? 0.7 : 0); });
     var f = radar.frames[i];
     if (f) { $('radar-time').textContent = 'Radar ' + hhmm(f.time * 1000) + (i === radar.frames.length - 1 ? ' (latest)' : ''); }
-    radarTiles(i);
+    radarCount();
   }
   function radarPlay(on) {
     radar.playing = on;
@@ -761,19 +776,21 @@
     dataTime: function (d) { return d.frames[d.frames.length - 1].time * 1000; },
     render: function (d, st) {
       radar.frames = d.frames;
-      var counts = radar.tiles = d.frames.map(function () { return { ok: 0, err: 0 }; });
+      var tiles = radar.tiles = d.frames.map(function () { return {}; });
       radar.st = st; radar.def = this; st.tiles = null;
-      var def = this, pending = null;
-      function tick(k, ok) {
-        if (ok) { counts[k].ok++; } else { counts[k].err++; }
-        if (!pending) { pending = setTimeout(function () { pending = null; paint(def); }, 300); }
+      function key(c) { return c.z + ':' + c.x + ':' + c.y; }
+      function tick(k, e, ok) {
+        if (!e.coords || !e.tile) { return; }
+        if (ok || e.tile.isConnected) { tiles[k][key(e.coords)] = { ok: ok, z: e.coords.z, el: e.tile }; }
+        if (radar.tiles === tiles) { radarRecount(); }
       }
       radar.layers = d.frames.map(function (f, k) {
         var l = L.tileLayer(d.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png', {
           pane: 'radar', opacity: 0, maxNativeZoom: 7, maxZoom: 16, attribution: 'Radar &copy; RainViewer'
         });
-        l.on('tileload', function () { tick(k, true); });
-        l.on('tileerror', function () { tick(k, false); });
+        l.on('tileload', function (e) { tick(k, e, true); });
+        l.on('tileerror', function (e) { tick(k, e, false); });
+        l.on('tileunload', function (e) { if (e.coords) { delete tiles[k][key(e.coords)]; } if (radar.tiles === tiles) { radarRecount(); } });
         st.group.addLayer(l);
         return l;
       });
