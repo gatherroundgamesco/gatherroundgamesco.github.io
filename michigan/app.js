@@ -75,15 +75,17 @@
   ];
   function poiById(id) { for (var i = 0; i < POIS.length; i++) { if (POIS[i].id === id) { return POIS[i]; } } return null; }
 
+  /* badge: [dx, dy] of the badge's 44x44 tap box top-left from the spot (default [-22, -66], above the spot). Set where the
+     default would cover a nearby place dot or label at the phone/iPad starting zooms and a few steps in. */
   var WEATHER_SPOTS = [
     { name: 'Detroit', lat: 42.3314, lng: -83.0458 },
     { name: 'Grand Rapids', lat: 42.9634, lng: -85.6681 },
-    { name: 'Lansing', lat: 42.7325, lng: -84.5555 },
+    { name: 'Lansing', lat: 42.7325, lng: -84.5555, badge: [-70, 22] },          // below-left: clear of Grand Rapids / Ann Arbor labels
     { name: 'Traverse City', lat: 44.7631, lng: -85.6206 },
-    { name: 'Mackinac', lat: 45.8492, lng: -84.6189 },
+    { name: 'Mackinac', lat: 45.8492, lng: -84.6189, badge: [-22, 22] },         // below: clear of the Soo Locks dot
     { name: 'Marquette', lat: 46.5436, lng: -87.3954 },
-    { name: 'Sault Ste. Marie', lat: 46.4953, lng: -84.3453 },
-    { name: 'Houghton', lat: 47.1211, lng: -88.5694 }
+    { name: 'Sault Ste. Marie', lat: 46.4953, lng: -84.3453, badge: [-8, -66] }, // above, nudged east: clear of Tahquamenon label
+    { name: 'Houghton', lat: 47.1211, lng: -88.5694, badge: [-22, -22] }         // centered (no place dot): clear of Isle Royale
   ];
 
   /* GLOS Seagull buoys near Michigan: [obs_dataset_id, name, lake, lat, lng, waveParamId, waterTempParamId, windParamId].
@@ -693,9 +695,10 @@
       var list = $('wx-list'); list.innerHTML = '';
       d.forEach(function (w) {
         var s = WEATHER_SPOTS[w.i], col = tempColor(w.f);
-        var html = '<span style="display:inline-block;margin-top:20px;padding:2px 7px;border-radius:9px;background:rgba(4,7,15,.8);border:1px solid ' + col +
+        var off = s.badge || [-22, -66], mt = off[1] <= -44 ? 20 : off[1] >= 22 ? 0 : 10;
+        var html = '<span style="display:inline-block;margin-top:' + mt + 'px;padding:2px 7px;border-radius:9px;background:rgba(4,7,15,.8);border:1px solid ' + col +
           ';color:' + col + ';font-weight:700;font-size:13px;box-shadow:0 0 10px ' + col + '66">' + Math.round(w.f) + '\u00b0</span>';
-        var m = L.marker([s.lat, s.lng], { pane: 'weather', icon: L.divIcon({ className: 'dm', html: html, iconSize: [44, 44], iconAnchor: [22, 66] }),
+        var m = L.marker([s.lat, s.lng], { pane: 'weather', icon: L.divIcon({ className: 'dm', html: html, iconSize: [44, 44], iconAnchor: [-off[0], -off[1]] }),
           keyboard: false, title: s.name + ' weather' });
         var nxt = w.next.map(function (n) { return hhmm(n.t) + ' ' + Math.round(n.f) + '\u00b0' + (n.p != null ? ' (' + n.p + '% precip)' : ''); }).join('<br>');
         m.bindPopup('<b>' + s.name + '</b><br>' + (WMO[w.code] || 'Conditions n/a') + ', ' + Math.round(w.f) + '\u00b0F, wind ' +
@@ -716,12 +719,22 @@
   /* ---------------------------------------------------------------
    * Sky: Radar (RainViewer public, keyless). Last ~1 hour, play/pause.
    * ------------------------------------------------------------- */
-  var radar = { frames: [], layers: [], idx: 0, timer: null, playing: false };
+  var radar = { frames: [], layers: [], idx: 0, timer: null, playing: false, tiles: [], st: null, def: null };
+  // Tile counters are kept per frame and rebuilt on every refresh. The chip reads only the frame on screen, so a frame
+  // change or a refresh starts it from that frame's own fresh counts; old failures don't stick.
+  function radarTiles(i) {
+    var st = radar.st;
+    if (!st) { return; }
+    var prev = st.tiles, cur = radar.tiles[i] || { ok: 0, err: 0 };
+    st.tiles = cur;
+    if (prev !== cur && radar.def && (!prev || prev.ok !== cur.ok || prev.err !== cur.err)) { paint(radar.def); }
+  }
   function radarShow(i) {
     radar.idx = i;
     radar.layers.forEach(function (l, k) { l.setOpacity(k === i ? 0.7 : 0); });
     var f = radar.frames[i];
     if (f) { $('radar-time').textContent = 'Radar ' + hhmm(f.time * 1000) + (i === radar.frames.length - 1 ? ' (latest)' : ''); }
+    radarTiles(i);
   }
   function radarPlay(on) {
     radar.playing = on;
@@ -748,18 +761,19 @@
     dataTime: function (d) { return d.frames[d.frames.length - 1].time * 1000; },
     render: function (d, st) {
       radar.frames = d.frames;
-      st.tiles = { ok: 0, err: 0 };
+      var counts = radar.tiles = d.frames.map(function () { return { ok: 0, err: 0 }; });
+      radar.st = st; radar.def = this; st.tiles = null;
       var def = this, pending = null;
-      function tick(ok) {
-        if (ok) { st.tiles.ok++; } else { st.tiles.err++; }
+      function tick(k, ok) {
+        if (ok) { counts[k].ok++; } else { counts[k].err++; }
         if (!pending) { pending = setTimeout(function () { pending = null; paint(def); }, 300); }
       }
-      radar.layers = d.frames.map(function (f) {
+      radar.layers = d.frames.map(function (f, k) {
         var l = L.tileLayer(d.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png', {
           pane: 'radar', opacity: 0, maxNativeZoom: 7, maxZoom: 16, attribution: 'Radar &copy; RainViewer'
         });
-        l.on('tileload', function () { tick(true); });
-        l.on('tileerror', function () { tick(false); });
+        l.on('tileload', function () { tick(k, true); });
+        l.on('tileerror', function () { tick(k, false); });
         st.group.addLayer(l);
         return l;
       });
