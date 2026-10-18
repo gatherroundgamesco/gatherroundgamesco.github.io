@@ -297,7 +297,7 @@
     return p;
   }
   pane('daylight', 300); pane('season', 320); pane('aurora', 330); pane('radar', 340);
-  pane('alerts', 410); pane('rivers', 610); pane('buoys', 620); pane('weather', 630); pane('pois', 650);
+  pane('alerts', 410); pane('rivers', 610); pane('buoys', 620); pane('pois', 650); pane('weather', 660);
   map.getPane('aurora').classList.add('aurora-img');
   map.getPane('season').classList.add('season-soft');
 
@@ -470,10 +470,25 @@
       data: null, fetchedAt: 0, group: L.layerGroup() };
   }
 
+  // Tile-based layers (radar) report tile health: 'down' = tiles failing and none loaded, 'degraded' = several failed.
+  function tileHealth(st) {
+    var t = st.tiles;
+    if (!t || st.status !== 'live') { return ''; }
+    if (t.err >= 4 && t.ok === 0) { return 'down'; }
+    if (t.err >= 3) { return 'degraded'; }
+    return '';
+  }
+  function effState(st) {
+    var h = tileHealth(st);
+    return h === 'down' ? 'error' : h === 'degraded' ? 'stale' : st.status;
+  }
   function statusText(def, st) {
     if (!st.on) { return 'Off'; }
     if (def.local) { return def.local(st); }
     if (st.status === 'loading') { return 'Updating\u2026'; }
+    var th = tileHealth(st);
+    if (th === 'down') { return 'Unavailable right now\ntiles not loading'; }
+    if (th === 'degraded') { return 'Degraded \u00b7 ' + hhmm(st.fetchedAt) + '\n' + st.tiles.err + ' tiles failed'; }
     if (st.status === 'live') {
       var t = 'Live \u00b7 ' + hhmm(st.fetchedAt);
       var dt = def.dataTime && st.data ? def.dataTime(st.data) : 0;
@@ -497,14 +512,14 @@
   function paint(def) {
     var st = S[def.id], c = chipFor(def);
     c.setAttribute('aria-pressed', st.on ? 'true' : 'false');
-    c.dataset.state = st.on ? st.status : 'off';
+    c.dataset.state = st.on ? effState(st) : 'off';
     var txt = statusText(def, st).split('\n');
     var cs = c.querySelector('.chip-status'); cs.innerHTML = '';
     txt.forEach(function (line, i) { if (i) { cs.appendChild(el('br')); } cs.appendChild(document.createTextNode(line)); });
     c.setAttribute('aria-label', def.name + ': ' + (st.on ? 'on' : 'off') + '. ' + txt.join(', '));
     if (def.pane) {
       var p = map.getPane(def.pane);
-      if (p) { p.classList.toggle('layer-dim', st.on && (st.status === 'stale' || st.status === 'error')); }
+      if (p) { var es = effState(st); p.classList.toggle('layer-dim', st.on && (es === 'stale' || es === 'error')); }
     }
   }
   function paintAll() { LAYERS.forEach(paint); renderPeek(); }
@@ -678,9 +693,9 @@
       var list = $('wx-list'); list.innerHTML = '';
       d.forEach(function (w) {
         var s = WEATHER_SPOTS[w.i], col = tempColor(w.f);
-        var html = '<span style="display:inline-block;margin-top:10px;padding:2px 7px;border-radius:9px;background:rgba(4,7,15,.8);border:1px solid ' + col +
+        var html = '<span style="display:inline-block;margin-top:20px;padding:2px 7px;border-radius:9px;background:rgba(4,7,15,.8);border:1px solid ' + col +
           ';color:' + col + ';font-weight:700;font-size:13px;box-shadow:0 0 10px ' + col + '66">' + Math.round(w.f) + '\u00b0</span>';
-        var m = L.marker([s.lat, s.lng], { pane: 'weather', icon: L.divIcon({ className: 'dm', html: html, iconSize: [44, 44], iconAnchor: [22, 40] }),
+        var m = L.marker([s.lat, s.lng], { pane: 'weather', icon: L.divIcon({ className: 'dm', html: html, iconSize: [44, 44], iconAnchor: [22, 66] }),
           keyboard: false, title: s.name + ' weather' });
         var nxt = w.next.map(function (n) { return hhmm(n.t) + ' ' + Math.round(n.f) + '\u00b0' + (n.p != null ? ' (' + n.p + '% precip)' : ''); }).join('<br>');
         m.bindPopup('<b>' + s.name + '</b><br>' + (WMO[w.code] || 'Conditions n/a') + ', ' + Math.round(w.f) + '\u00b0F, wind ' +
@@ -733,10 +748,18 @@
     dataTime: function (d) { return d.frames[d.frames.length - 1].time * 1000; },
     render: function (d, st) {
       radar.frames = d.frames;
+      st.tiles = { ok: 0, err: 0 };
+      var def = this, pending = null;
+      function tick(ok) {
+        if (ok) { st.tiles.ok++; } else { st.tiles.err++; }
+        if (!pending) { pending = setTimeout(function () { pending = null; paint(def); }, 300); }
+      }
       radar.layers = d.frames.map(function (f) {
         var l = L.tileLayer(d.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png', {
           pane: 'radar', opacity: 0, maxNativeZoom: 7, maxZoom: 16, attribution: 'Radar &copy; RainViewer'
         });
+        l.on('tileload', function () { tick(true); });
+        l.on('tileerror', function () { tick(false); });
         st.group.addLayer(l);
         return l;
       });
@@ -966,6 +989,15 @@
     if (c && c.ll && Date.now() - c.t < ZONE_TTL) { zoneCache[url] = c.ll; return c.ll; }
     return null;
   }
+  // areaDesc is "; "-joined names in geocode.UGC order. Keep only names whose UGC code is a Michigan or
+  // Great Lakes marine zone. Only when the lists line up exactly; otherwise show NWS's text unchanged.
+  function miArea(p) {
+    var desc = p.areaDesc || '', ugc = (p.geocode && p.geocode.UGC) || [], names = desc.split('; ');
+    var zones = (p.affectedZones || []).map(function (u) { return u.split('/').pop(); });
+    if (!ugc.length || names.length !== ugc.length || zones.join() !== ugc.join()) { return desc; }
+    var keep = names.filter(function (n, i) { return zoneKeep('/' + ugc[i]); });
+    return keep.length ? keep.join('; ') : desc;
+  }
   function getZone(url) {
     var have = zoneFromDevice(url);
     if (have) { return Promise.resolve(have); }
@@ -988,7 +1020,7 @@
         var feats = (j.features || []).map(function (f) {
           var p = f.properties || {};
           return { id: p.id || f.id, event: p.event || 'Alert', severity: p.severity || 'Unknown', headline: p.headline || '',
-            area: p.areaDesc || '', sent: Date.parse(p.sent) || 0, ends: Date.parse(p.ends || p.expires) || 0,
+            area: miArea(p), sent: Date.parse(p.sent) || 0, ends: Date.parse(p.ends || p.expires) || 0,
             text: [p.description, p.instruction].filter(Boolean).join('\n\n'), sender: p.senderName || 'NWS',
             geom: geomToLatLngs(f.geometry), zones: f.geometry ? [] : (p.affectedZones || []).filter(zoneKeep) };
         });
