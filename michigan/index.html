@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#04070f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Michigan Live Map</title>
+  <link rel="icon" href="data:,">
+  <meta name="description" content="Live dark satellite map of Michigan: aurora odds, weather, radar, alerts, rivers, Great Lakes buoys and daylight.">
+  <link rel="stylesheet" href="leaflet/leaflet.css?v=1.9.4">
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+  <div id="map" role="application" aria-label="Satellite map of Michigan. Use Tab to move between places and Enter to open one."></div>
+  <div id="aurora-veil" class="aurora-veil" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="brand"><span class="brand-dot" aria-hidden="true"></span><h1>Michigan <span>Live</span></h1></div>
+    <button type="button" id="refresh" class="btn btn-icon" aria-label="Refresh live data">&#x21bb;</button>
+  </header>
+
+  <p id="basemap-msg" class="basemap-msg" role="status" hidden>Satellite imagery unavailable right now. Live layers still work.</p>
+
+  <div id="radar-ctl" class="radar-ctl" hidden>
+    <button type="button" id="radar-play" class="btn" aria-label="Play radar loop">Play</button>
+    <span id="radar-time" class="radar-time">Radar</span>
+  </div>
+
+  <section id="sheet" class="sheet" data-snap="peek" aria-label="Live panel">
+    <button type="button" id="sheet-handle" class="sheet-handle" aria-label="Expand panel" aria-controls="sheet-body">
+      <span class="grip" aria-hidden="true"></span>
+      <span id="peek-line" class="peek-line" aria-live="polite">Loading live data…</span>
+    </button>
+
+    <div id="sheet-body" class="sheet-body">
+      <section id="detail" class="card detail" aria-live="polite" hidden>
+        <div class="row between">
+          <p id="detail-kicker" class="kicker">Place</p>
+          <button type="button" id="detail-close" class="btn btn-ghost btn-sm" aria-label="Close details">Close</button>
+        </div>
+        <h2 id="detail-name"></h2>
+        <p id="detail-line"></p>
+        <div id="detail-facts" class="facts"></div>
+        <a id="detail-link" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" hidden>Visit site</a>
+      </section>
+
+      <article id="tonight" class="card tonight" aria-label="Tonight in Michigan">
+        <p class="kicker">Tonight in Michigan</p>
+        <h2 id="tonight-title">Finding tonight&rsquo;s highlight…</h2>
+        <p id="tonight-line" class="muted"></p>
+        <div class="row">
+          <button type="button" id="tonight-go" class="btn btn-accent">Fly there</button>
+          <a id="tonight-link" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" hidden>Source</a>
+        </div>
+      </article>
+
+      <div class="tabs" role="tablist" aria-label="Layers">
+        <button type="button" role="tab" id="tab-sky" class="tab" aria-selected="true" aria-controls="pane-sky">Sky</button>
+        <button type="button" role="tab" id="tab-water" class="tab" aria-selected="false" aria-controls="pane-water">Water</button>
+        <button type="button" role="tab" id="tab-alerts" class="tab" aria-selected="false" aria-controls="pane-alerts">Alerts <span id="alert-count" class="count" hidden></span></button>
+      </div>
+
+      <div id="pane-sky" class="pane" role="tabpanel" aria-labelledby="tab-sky">
+        <div class="chips" data-group="sky"></div>
+        <div id="kp-card" class="card now" hidden></div>
+        <div id="sun-card" class="card now" hidden></div>
+        <ul id="wx-list" class="wx-list" aria-label="Weather now"></ul>
+      </div>
+      <div id="pane-water" class="pane" role="tabpanel" aria-labelledby="tab-water" hidden>
+        <div class="chips" data-group="water"></div>
+        <div id="water-summary" class="card now" hidden></div>
+        <ul id="water-list" class="list"></ul>
+      </div>
+      <div id="pane-alerts" class="pane" role="tabpanel" aria-labelledby="tab-alerts" hidden>
+        <div class="chips" data-group="alerts"></div>
+        <ul id="alert-list" class="list"></ul>
+      </div>
+
+
+      <section class="seasonal" aria-labelledby="season-title">
+        <h2 id="season-title" class="section-title">Seasonal ideas</h2>
+        <p class="muted small">Typical timing only. Check conditions before you go.</p>
+        <ul id="season-list" class="list"></ul>
+      </section>
+
+      <footer class="credits">
+        Imagery: Esri, Maxar, Earthstar Geographics · Aurora &amp; Kp: NOAA SWPC · Weather: Open-Meteo ·
+        Radar: RainViewer · Alerts: NWS · Rivers: USGS · Buoys: GLOS Seagull · Map: Leaflet (BSD-2-Clause, self-hosted)
+      </footer>
+    </div>
+  </section>
+
+  <script src="leaflet/leaflet.js?v=1.9.4"></script>
+  <script src="seasonal.js?v=2"></script>
+  <script src="app.js?v=2"></script>
+</body>
+</html>
